@@ -4,26 +4,51 @@ import random
 import shutil
 import time
 import logging
+import inspect
 
 from functools import wraps
 from inspect import signature
 
 def typeassert(*ty_args, **ty_kwargs): #https://github.com/callmexss/pyhandy/blob/master/pyhandy/pyhandy.py
-    """Decorator to check type of specific arguments."""
-
+    """
+    Decorator to check type of the indicated arguments. 
+    If used without arguments it will use the available duck types instead.
+    
+    Usage
+    ----------    
+    @typeassert(a=int,b=str)
+    def foo(a,b):
+        print(f"{a=} and {b=}")
+    
+    @typeassert
+    def foo(a:int,b:str):
+        print(f"{a=} and {b=}")
+       
+    Both of the ways above will yield the same output:
+    >foo(1,2)
+    > TypeError: 2 must be <class 'str'>
+    >foo(1,'2')
+    > a=1 and b='2'
+    """
+    noargs = True
     def decorator(func):
         sig = signature(func)
         bind_types = sig.bind_partial(*ty_args, **ty_kwargs).arguments
-
         def wrapper(*args, **kwargs):
+            duck_types = {name:param.annotation for name,param in sig.parameters.items() if param.annotation is not inspect._empty}
             for name, obj in sig.bind(*args, **kwargs).arguments.items():
-                if name in bind_types:
+                if noargs and name in bind_types:
                     if not isinstance(obj, bind_types[name]):
-                        raise TypeError(f"{obj} must be {bind_types[name]}")
+                        raise TypeError(f"{name} must be {bind_types[name]} got value {obj} of class {type(obj)}")
+                elif not noargs and name in duck_types:
+                    if not isinstance(obj,duck_types[name]):
+                        raise TypeError(f"{name} must be {duck_types[name]} got value {obj} of class {type(obj)}")
             return func(*args, **kwargs)
 
         return wrapper
-
+    if ty_args:
+        noargs = False
+        return decorator(ty_args[0])
     return decorator
 
 def get_logger_with_format(logger_name=None,logger_format='%(asctime)s - %(name)s %(levelname)s: %(message)s\n',**kwargs):
