@@ -53,7 +53,8 @@ def get_data_summary(
     get_col_summary = lambda col,data_type: {
         'ColumnName': col.name, 
         'DataType': data_type, 
-        'NumMissing': col.isnull().sum(),
+#         'NumMissing': col.isnull().sum(),
+        'MissingPercent' : col.isnull().sum()/len(col),
         'CorrelationWithTarget': np.corrcoef(col[~np.isnan(col)],target_data[~np.isnan(target_data)])[0,1] if (data_type not in ['category','object'] and 'datetime' not in data_type and target_data is not None) else np.nan,
         **{name:f(col,data_type) for name,f in target_metric_dict.items()},**{name:f(col,data_type) for name,f in target_metric_dict.items()},
         'Mean': col.mean() if data_type not in ['category','binary','object','datetime64[ns]'] else np.nan, 
