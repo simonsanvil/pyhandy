@@ -63,7 +63,7 @@ def get_data_summary(
         'MinValue': col.min() if data_type not in ['category','binary','object'] else np.nan, 
         'MaxValue': col.max() if data_type not in ['category','binary','object'] else np.nan,
         'NumOfUnique': col.nunique(),
-        'UniqueValues': sorted(col.unique()) if data_type in ['category','binary','object'] else np.nan,
+        'UniqueValues': sorted(col.dropna().unique()) if data_type in ['category','binary','object'] else np.nan,
         'FracUnique': list((col.value_counts()/len(col)).round(3)) if data_type in ['category','binary','object'] else np.nan,
         **{name:f(col) for name,f in extra_summary_metrics.items()},
     }
